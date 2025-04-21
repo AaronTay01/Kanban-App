@@ -18,6 +18,7 @@ coverage
 /cypress/screenshots/
 
 # Editor directories and files
+.vscode/
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -27,4 +28,21 @@ coverage
 *.sln
 *.sw?
 
+# Environment files
+.env
+.env.*.local
+
+# Vite cache
+.vite/
+
+# Firebase
+.firebase/
+.firebase/*
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Typescript
 *.tsbuildinfo
+
