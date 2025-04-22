@@ -9,14 +9,19 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "format": "prettier --write src/"
+    "format": "prettier --write src/",
+    "test-api-status": "tsx src/test/test-api.ts",
+    "test": "tsx src/test/test-creation.ts"
   },
   "dependencies": {
+    "dotenv": "^16.5.0",
     "firebase": "^11.6.0",
     "pinia": "^3.0.1",
-    "vue": "^3.5.13"
+    "vue": "^3.5.13",
+    "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.4",
     "@tsconfig/node22": "^22.0.1",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-vue": "^5.2.3",
@@ -26,6 +31,8 @@
     "postcss": "^8.5.3",
     "prettier": "3.5.3",
     "tailwindcss": "^4.1.4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.3",
     "typescript": "~5.8.0",
     "vite": "^6.2.4",
     "vite-plugin-vue-devtools": "^7.7.2",
