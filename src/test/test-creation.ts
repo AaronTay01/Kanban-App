@@ -1,4 +1,4 @@
-import { getBoard, createBoard, getColumns, createColumn, createCard } from '../firebase-api/api'
+import { getBoard, getColumns, createColumn, createCard } from '../firebase-api/api'
 import type { Column } from '../firebase-api/api-interfaces'
 
 async function testBoardAndSetup() {

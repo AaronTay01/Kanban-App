@@ -1,7 +1,8 @@
 export interface Board {
   id: string
   name: string
-  createdAt?: Date
+  userId: string
+  createdAt: Date
 }
 
 export interface Column {
@@ -14,4 +15,12 @@ export interface Card {
   id: string
   content: string
   order: number
+}
+
+export interface User {
+  id: string
+  email: string
+  password: string
+  createdAt: Date
+  boardIds: string[]
 }

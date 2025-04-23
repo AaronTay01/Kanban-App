@@ -2,8 +2,35 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Users can only access their own user doc
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Boards - only owner can read/write
+    match /boards/{boardId} {
+      // Existing boards
+      allow read, update, delete: if request.auth != null
+                                  && request.auth.uid == resource.data.userId;
+
+      // Creating new boards
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.userId;
+
+      // Columns subcollection
+      match /columns/{columnId} {
+        allow read, update, delete: if request.auth != null 
+                                    && request.auth.uid == get(/databases/$(database)/documents/boards/$(boardId)).data.userId;
+
+        allow create: if request.auth != null 
+                      && request.auth.uid == get(/databases/$(database)/documents/boards/$(boardId)).data.userId;
+      }
+    }
+
+    // Deny all other access
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

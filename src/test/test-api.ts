@@ -1,4 +1,4 @@
-import { getBoard, createBoard, getColumns, createColumn } from '../firebase-api/api'
+import { getBoard, createUserBoard, getColumns, createColumn, loginUser } from '../firebase-api/api'
 import type { Column } from '../firebase-api/api-interfaces'
 
 async function setupMainBoardStructure() {
@@ -6,8 +6,12 @@ async function setupMainBoardStructure() {
 
   if (!board) {
     console.log('❌ Board "Main Board" not found! Creating it...')
-    // Create the board with a specific name
-    const boardId = await createBoard('Main Board')
+    const boardId = await createUserBoard('Main Board', {
+      id: 'main-board-id',
+      name: 'Main Board',
+      userId: 'placeholder-user-id',
+      createdAt: new Date(),
+    })
     console.log(`✅ Created board with ID: ${boardId}`)
     board = await getBoard()
   } else {
@@ -21,28 +25,35 @@ async function setupMainBoardStructure() {
   ]
 
   const existingColumns = await getColumns(board.id)
-  const existingTitles = existingColumns.map((col: Column) => col.title)
 
   for (const { title, order } of requiredColumns) {
     const existingColumn = existingColumns.find((col: Column) => col.title === title)
 
     if (!existingColumn) {
-      // Column doesn't exist, create it
       await createColumn(title, board.id)
       console.log(`✅ Created column "${title}" (order: ${order})`)
+    } else if (existingColumn.order !== order) {
+      console.log(
+        `❌ Column "${title}" exists but order is incorrect. Expected order: ${order}, Found: ${existingColumn.order}`,
+      )
     } else {
-      // Column exists, check if the order matches
-      if (existingColumn.order !== order) {
-        console.log(
-          `❌ Column "${title}" exists but order is incorrect. Expected order: ${order}, Found order: ${existingColumn.order}`,
-        )
-      } else {
-        console.log(`✅ Column "${title}" already exists, Order ${order} Correct`)
-      }
+      console.log(`✅ Column "${title}" already exists, Order ${order} Correct`)
     }
   }
 }
 
-setupMainBoardStructure()
-  .catch((err) => console.error('❌ Error during initial setup:', err))
-  .finally(() => console.log('🏁 Setup completed'))
+async function test() {
+  try {
+    console.log('🔐 Logging in with test user...')
+    await loginUser('testuser@gmail.com', 'testuser123')
+    console.log('✅ Login successful')
+
+    await setupMainBoardStructure()
+  } catch (err) {
+    console.error('❌ Error during test:', err)
+  } finally {
+    console.log('🏁 Test completed')
+  }
+}
+
+test()
