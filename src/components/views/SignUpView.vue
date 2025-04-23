@@ -1,47 +1,65 @@
 <template>
-  <div class="flex min-h-full items-center justify-center px-4 py-12">
-    <div class="w-full max-w-md space-y-8">
-      <div>
-        <h2 class="text-center text-2xl font-bold">Create an account</h2>
+  <div class="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+      <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
+        Create an account
+      </h2>
+
+      <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+        <form class="space-y-6" @submit.prevent="handleSignUp">
+          <div class="mt-2">
+            <label for="email" class="block text-sm/6 font-medium text-gray-900">
+              Email address
+            </label>
+            <div>
+              <input
+                type="email"
+                id="email"
+                v-model="email"
+                required
+                autocomplete="email"
+                class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="password" class="block text-sm/6 font-medium text-gray-900">
+              Password
+            </label>
+            <div class="mt-2">
+              <input
+                type="password"
+                id="password"
+                v-model="password"
+                required
+                autocomplete="new-password"
+                class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+              />
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              Sign up
+            </button>
+          </div>
+        </form>
+
+        <button
+          @click.prevent="goBack"
+          class="mt-4 flex w-full justify-center rounded-md border border-gray-300 px-3 py-1.5 text-sm/6 font-medium text-gray-700 hover:bg-gray-100"
+        >
+          Back
+        </button>
+
+        <p class="mt-6 text-center text-sm text-gray-600">
+          {{ signUpStatus }}
+        </p>
       </div>
-
-      <form @submit.prevent="handleSignUp" class="space-y-6">
-        <div>
-          <label for="email" class="block text-sm font-medium">Email address</label>
-          <input
-            id="email"
-            type="email"
-            v-model="email"
-            required
-            class="mt-1 w-full rounded-md border border-gray-300 p-2"
-          />
-        </div>
-
-        <div>
-          <label for="password" class="block text-sm font-medium">Password</label>
-          <input
-            id="password"
-            type="password"
-            v-model="password"
-            required
-            class="mt-1 w-full rounded-md border border-gray-300 p-2"
-          />
-        </div>
-
-        <div class="space-y-2">
-          <button type="submit" class="w-full rounded bg-blue-600 p-2 text-white hover:bg-blue-700">
-            Sign up
-          </button>
-          <button
-            @click.prevent="goBack"
-            class="w-full rounded border border-gray-400 p-2 text-gray-700 hover:bg-gray-100"
-          >
-            Back
-          </button>
-        </div>
-      </form>
-
-      <p class="text-center text-sm text-gray-600">{{ signUpStatus }}</p>
     </div>
   </div>
 </template>
