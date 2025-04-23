@@ -8,4 +8,13 @@ export default defineConfig({
     },
   },
   plugins: [vue()],
+  build: {
+    // This will prevent Vite from creating separate files for chunks
+    chunkSizeWarningLimit: 500, // Optionally adjust the chunk size warning limit
+    rollupOptions: {
+      output: {
+        manualChunks: undefined, // Disable chunking
+      },
+    },
+  },
 })

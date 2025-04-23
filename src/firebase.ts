@@ -6,8 +6,10 @@ import { getAuth } from 'firebase/auth'
 const isNode = typeof process !== 'undefined' && process.versions?.node
 
 if (isNode) {
-  const dotenv = await import('dotenv')
-  dotenv.config()
+  ;(async () => {
+    const dotenv = await import('dotenv')
+    dotenv.config()
+  })()
 }
 
 const firebaseConfig = isNode
