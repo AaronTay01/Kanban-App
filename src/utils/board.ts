@@ -1,4 +1,4 @@
-import { createColumn, createUserBoard, getBoard, getColumns } from '../firebase-api/api'
+import { createColumn, createUserBoard, getUserBoard } from '../firebase-api/api'
 import type { UserCredential } from 'firebase/auth'
 
 async function createBoardForUser(userCredential: UserCredential, boardName = 'Main Board') {
@@ -24,15 +24,15 @@ async function createBoardForUser(userCredential: UserCredential, boardName = 'M
   // Create inital columns
   console.log('🔄 Creating initial columns...')
   try {
-    let board = await getBoard()
+    let board = await getUserBoard()
     if (!board) {
       throw new Error('❌ Board "Main Board" not found!')
     } else {
       console.log(`✅ Found board: ${board.name} (ID: ${board.id})`)
-      const initalColumns: { title: string }[] = [
-        { title: 'To Do' },
-        { title: 'Progress' },
-        { title: 'Done' },
+      const initalColumns: { title: string; order: number }[] = [
+        { title: 'To Do', order: 0 },
+        { title: 'Progress', order: 1 },
+        { title: 'Done', order: 2 },
       ]
       for (const { title } of initalColumns) {
         await createColumn(title, board.id)

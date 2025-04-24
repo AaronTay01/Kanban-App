@@ -1,18 +1,11 @@
-<!-- Card.vue -->
 <template>
-  <div class="bg-grey p-4 rounded-lg shadow-md">
-    <h4 class="text-sm font-medium">{{ card.title }}</h4>
+  <div class="rounded-lg bg-white shadow p-4 mb-2 cursor-move min-h-[100px]">
+    <p class="text-sm text-gray-900">{{ card.content }}</p>
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    card: Object,
-  },
-}
-</script>
+<script setup lang="ts">
+import type { Card } from '@/firebase-api/api-interfaces'
 
-<style scoped>
-/* No extra styles needed as we're using Tailwind */
-</style>
+defineProps<{ card: Card }>()
+</script>

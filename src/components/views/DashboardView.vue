@@ -136,7 +136,9 @@
 
     <!-- Page Content -->
     <main>
-      <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8"></div>
+      <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <KanbanBoard :board="board" v-if="board" />
+      </div>
     </main>
   </div>
 </template>
@@ -145,27 +147,38 @@
 import { ref, onMounted } from 'vue'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import router from '@/router'
-import { logoutUser } from '@/firebase-api/api'
-
+import { getUserBoard, getColumns, logoutUser } from '@/firebase-api/api'
+import KanbanBoard from '@/components/Board.vue'
+import { Board } from '@/firebase-api/api-interfaces'
 import {
   Disclosure,
   DisclosureButton,
-  DisclosurePanel,
   Menu,
   MenuButton,
   MenuItem,
   MenuItems,
 } from '@headlessui/vue'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { BellIcon, Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 const userId = ref<string | null>(null)
+let board = ref<Board | null>(null)
 
 onMounted(() => {
   const auth = getAuth()
-  onAuthStateChanged(auth, (user) => {
+
+  // Async function to load the user board
+  const loadUserBoard = async (userId: string) => {
+    board.value = await getUserBoard()
+    console.log('✅ User Board Retrieved:', board.value)
+  }
+
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
       userId.value = user.uid
       console.log('✅ Logged in user ID:', user.uid)
+
+      // Call the async function to load the user board
+      await loadUserBoard(user.uid)
     } else {
       console.warn('❌ No user logged in. Redirecting...')
       router.push('/login')
@@ -183,11 +196,6 @@ const handleLogout = async () => {
   }
 }
 
-// Dummy content
-const user = {
-  name: 'Tom Cook',
-  email: 'tom@example.com',
-}
 const navigation = [{ name: 'Dashboard', href: '#', current: true }]
 const userNavigation = [
   { name: 'Your Profile', href: '#' },

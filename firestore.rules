@@ -25,6 +25,15 @@ service cloud.firestore {
 
         allow create: if request.auth != null 
                       && request.auth.uid == get(/databases/$(database)/documents/boards/$(boardId)).data.userId;
+
+        // Cards subcollection under columns
+        match /cards/{cardId} {
+          allow read, update, delete: if request.auth != null 
+                                      && request.auth.uid == get(/databases/$(database)/documents/boards/$(boardId)).data.userId;
+
+          allow create: if request.auth != null 
+                        && request.auth.uid == get(/databases/$(database)/documents/boards/$(boardId)).data.userId;
+        }
       }
     }
 

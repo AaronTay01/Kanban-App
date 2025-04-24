@@ -69,7 +69,6 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createUser } from '@/firebase-api/api'
 import { createBoardForUser } from '@/utils/board'
-// import { createBoardForUser } from '@/utils/board'
 
 const email = ref('')
 const password = ref('')
@@ -87,7 +86,6 @@ const handleSignUp = async () => {
     if (userCredential.user.uid) {
       signUpStatus.value = `Successfully created user: ${userCredential.user.email}`
 
-      // Optionally: create default board
       await createBoardForUser(userCredential)
 
       router.push('/login')

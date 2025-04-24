@@ -10,19 +10,19 @@ import {
   setDoc,
   limit,
   orderBy,
+  runTransaction,
 } from 'firebase/firestore'
 import {
   createUserWithEmailAndPassword,
-  getAuth,
   signInWithEmailAndPassword,
   UserCredential,
 } from 'firebase/auth'
 import { db } from '../firebase'
 import type { Board, Column, Card } from './api-interfaces'
+import { auth } from '@/firebase'
 
 // Board APIs
-export async function getBoard(): Promise<Board> {
-  const auth = getAuth()
+export async function getUserBoard(): Promise<Board> {
   const user = auth.currentUser
   if (!user) throw new Error('User not authenticated')
 
@@ -30,7 +30,7 @@ export async function getBoard(): Promise<Board> {
   const snapshot = await getDocs(q)
 
   // TODO: This assumes that a user can only have one board. If you want to support multiple boards, you need to adjust this logic.
-  const docSnap = snapshot.docs[0] // Get the first board for the user which is main-board
+  const docSnap = snapshot.docs[0] // Get the first board of the user aka the main board
 
   if (!docSnap) throw new Error('No board found for user')
 
@@ -38,7 +38,6 @@ export async function getBoard(): Promise<Board> {
 }
 
 export async function createUserBoard(boardId: string, boardData: Board) {
-  const auth = getAuth()
   const user = auth.currentUser
   if (!user) throw new Error('User not authenticated')
 
@@ -52,7 +51,7 @@ export async function createUserBoard(boardId: string, boardData: Board) {
 
 // Column APIs
 export async function getColumns(boardId?: string): Promise<Column[]> {
-  const board = boardId ? { id: boardId } : await getBoard()
+  const board = boardId ? { id: boardId } : await getUserBoard()
   const ref = collection(db, 'boards', board.id, 'columns')
   const snapshot = await getDocs(ref)
   return snapshot.docs.map((doc) => ({
@@ -61,15 +60,14 @@ export async function getColumns(boardId?: string): Promise<Column[]> {
   }))
 }
 
-export async function createColumn(title: string, boardId?: string) {
-  const auth = getAuth()
+export async function createColumn(title: string, boardId?: string, order?: number) {
   const user = auth.currentUser
   if (!user) throw new Error('User not authenticated')
 
   // Get board either by param or default
   const board = boardId
-    ? await getDoc(doc(db, 'boards', boardId)).then((doc) => doc.data())
-    : await getBoard()
+    ? await getDoc(doc(db, 'boards', boardId)).then((doc) => doc.data()) // Corrected here, no need for 'order' in path
+    : await getUserBoard()
 
   if (!board || !board.id) {
     throw new Error('Board not found')
@@ -88,7 +86,12 @@ export async function createColumn(title: string, boardId?: string) {
   let newOrder = 1
   if (!snapshot.empty) {
     const lastColumn = snapshot.docs[0].data()
-    newOrder = (lastColumn.order ?? 0) + 1
+    newOrder = (lastColumn.order ?? 0) + 1 // Default order is incremented based on the last column
+  }
+
+  // If order is provided, use it instead of the calculated one
+  if (order !== undefined) {
+    newOrder = order
   }
 
   const docRef = await addDoc(ref, {
@@ -110,32 +113,88 @@ export async function createCard(
   columnId: string,
   boardId?: string,
 ) {
-  const board = boardId ? { id: boardId } : await getBoard()
+  const board = boardId ? { id: boardId } : await getUserBoard()
   const ref = collection(db, 'boards', board.id, 'columns', columnId, 'cards')
-  return await addDoc(ref, { content, order })
+
+  try {
+    // Create the card document in Firestore
+    const docRef = await addDoc(ref, { content, order, columnId }) // Ensure columnId is saved along with the card
+    console.log(`✅ Created card with ID: ${docRef.id} in column: ${columnId}`)
+
+    // Fetch the created card to return its data along with its ID
+    // const createdCard = await getDoc(docRef)
+    return { id: docRef.id, content, order, columnId } // Return card data with ID
+  } catch (error) {
+    console.error('❌ Error creating card:', error)
+    throw error
+  }
+}
+
+export async function getCards(columnId: string, boardId?: string): Promise<Card[]> {
+  const board = boardId ? { id: boardId } : await getUserBoard()
+  const ref = collection(db, 'boards', board.id, 'columns', columnId, 'cards')
+  const q = query(ref, orderBy('order', 'asc'))
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    columnId,
+    ...(doc.data() as Omit<Card, 'id'>),
+  }))
 }
 
 export async function updateCard(
   boardId: string,
   oldColumnId: string,
   newColumnId: string,
+  order: number,
   cardId: string,
-  updatedCardData: Partial<Card>,
+  updatedCardData: Partial<Card> = {},
 ) {
+  if (!boardId || !oldColumnId || !newColumnId || !cardId) {
+    console.error('❌ Missing critical IDs for updateCard:', {
+      boardId,
+      oldColumnId,
+      newColumnId,
+      cardId,
+    })
+    throw new Error('Missing critical IDs for updateCard')
+  }
+
   const oldCardRef = doc(db, 'boards', boardId, 'columns', oldColumnId, 'cards', cardId)
-  const newCardRef = doc(collection(db, 'boards', boardId, 'columns', newColumnId, 'cards'))
+  const newCardRef = doc(db, 'boards', boardId, 'columns', newColumnId, 'cards', cardId)
 
-  const cardSnap = await getDoc(oldCardRef)
-  if (!cardSnap.exists()) throw new Error('Card not found')
+  console.log(
+    `Trying to access card at path: boards/${boardId}/columns/${oldColumnId}/cards/${cardId}`,
+  )
 
-  await setDoc(newCardRef, { ...cardSnap.data(), ...updatedCardData })
-  await updateDoc(newCardRef, { columnId: newColumnId })
+  // Check if the card exists in the old column before updating
+  const oldCardSnap = await getDoc(oldCardRef)
+  if (!oldCardSnap.exists()) {
+    console.error('❌ Card not found in old column:', oldCardRef.path)
+    throw new Error('Card not found in old column')
+  }
+
+  console.log(`✅ Card found in old column: ${oldCardSnap.id}`)
+
+  // Proceed with the update or move
+  await runTransaction(db, async (transaction) => {
+    const originalData = oldCardSnap.data()
+    const newCardData = {
+      ...originalData,
+      ...updatedCardData,
+      columnId: newColumnId,
+      order,
+    }
+
+    transaction.set(newCardRef, newCardData)
+    transaction.delete(oldCardRef)
+  })
+
+  console.log(`✅🔄 Reorder and Moved card "${cardId}" from "${oldColumnId}" to "${newColumnId}"`)
 }
 
 // User APIs
 export async function createUser(email: string, password: string): Promise<UserCredential> {
-  const auth = getAuth()
-
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password)
     const user = userCredential.user
@@ -156,17 +215,14 @@ export async function createUser(email: string, password: string): Promise<UserC
   }
 }
 export async function loginUser(email: string, password: string): Promise<UserCredential> {
-  const auth = getAuth()
   return await signInWithEmailAndPassword(auth, email, password)
 }
 
 export async function logoutUser() {
-  const auth = getAuth()
   await auth.signOut()
 }
 
 export async function getCurrentUser() {
-  const auth = getAuth()
   const user = auth.currentUser
   if (!user) throw new Error('User not authenticated')
 

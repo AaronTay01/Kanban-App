@@ -46,6 +46,16 @@
             </div>
           </div>
 
+          <div class="flex items-center">
+            <input
+              id="remember"
+              type="checkbox"
+              v-model="remember"
+              class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+            />
+            <label for="remember" class="ml-2 block text-sm text-gray-900"> Remember me </label>
+          </div>
+
           <div>
             <button
               type="submit"
@@ -68,6 +78,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { loginUser } from '@/firebase-api/api'
+import { browserLocalPersistence, browserSessionPersistence, setPersistence } from 'firebase/auth'
+import { auth } from '@/firebase'
 
 const email = ref('')
 const password = ref('')
@@ -77,6 +89,9 @@ const router = useRouter()
 
 const login = async () => {
   try {
+    // Set persistence based on checkbox
+    await setPersistence(auth, remember.value ? browserLocalPersistence : browserSessionPersistence)
+
     const user = await loginUser(email.value, password.value)
     console.log('Logged in as:', user)
 

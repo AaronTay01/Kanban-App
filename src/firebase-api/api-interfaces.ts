@@ -15,6 +15,7 @@ export interface Card {
   id: string
   content: string
   order: number
+  columnId?: string
 }
 
 export interface User {
