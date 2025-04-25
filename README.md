@@ -1,33 +1,81 @@
-# Kanban-App
+# Kanban App
 
-This template should help get you started developing with Vue 3 in Vite.
+A simple Kanban board built with Vue.js, Firebase, and TailwindCSS for managing tasks. The app supports drag-and-drop functionality, user authentication, and task management across different columns.
 
-## Recommended IDE Setup
+## Features
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- User authentication with Firebase: Users can sign up and log in to manage their tasks.
+- Drag-and-drop functionality for task management.
+- Responsive design using TailwindCSS: The app is fully responsive and works well on mobile devices.
+- Firebase Firestore for real-time data storage and retrieval.
+- Real-time updates: Changes made by one user are instantly reflected for all users.
 
-## Type Support for `.vue` Imports in TS
+## Tech Stack
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+- **Frontend**: Vue 3, Vite, TailwindCSS
+- **Backend**: Firebase (Authentication, Firestore)
+- **Deployment**: Firebase Hosting
 
-## Customize configuration
+## Getting Started
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+### Prequisites
 
-## Project Setup
+### Installation
 
-```sh
-npm install
+1. Clone the repository:
+
+```bash
+git clone <repository-url>
+cd <project-directory>
 ```
 
-### Compile and Hot-Reload for Development
+2. Install dependencies:
 
-```sh
+```bash
+npm install
+
+```
+
+3. Set up Firebase:
+
+- Create a Firebase project on the Firebase Console.
+- Set up Firebase Authentication and Firestore.
+- Initialize Firebase in the project by adding your Firebase configuration into the .env file.
+
+4. Run the development server:
+
+```bash
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+## Firebase Configuration
 
-```sh
+Ensure you have the Firebase configuration set correctly in the settings file. You can find this in the Firebase Console under Project Settings.
+
+# Deployment
+
+1. Initalize Firebase:
+
+```bash
+firebase deploy
+```
+
+Select **Hosting** and **Firestore** if needed.
+
+2. Build the project:
+
+```bash
 npm run build
 ```
+
+3. Deploy to Firebase:
+
+```bash
+firebase deploy
+```
+
+# Access
+
+You can access the deployed app at the URL provided by Firebase Hosting.
+
+[Kanban App](https://kanban-dev-01.web.app/)
