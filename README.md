@@ -20,6 +20,9 @@ A simple Kanban board built with Vue.js, Firebase, and TailwindCSS for managing 
 
 ### Prequisites
 
+1. Node.js and npm installed on your machine.
+2. Firebase account for authentication and database.
+
 ### Installation
 
 1. Clone the repository:
@@ -79,3 +82,5 @@ firebase deploy
 You can access the deployed app at the URL provided by Firebase Hosting.
 
 [Kanban App](https://kanban-dev-01.web.app/)
+
+[Figma Mockup](https://www.figma.com/design/3vctSr5ebyTrIQ7EzL4Kut/Untitled?node-id=0-1&t=7c2PL7NcTf640dxc-1)
