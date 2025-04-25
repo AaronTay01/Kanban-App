@@ -37,28 +37,31 @@ const router = createRouter({
   routes,
 })
 
-let isInitialLoad = true
+let isAuthResolved = false
 
-router.beforeEach((to, from, next) => {
-  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+const getAuthState = () =>
+  new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, () => {
+      isAuthResolved = true
+      unsubscribe()
+      resolve(true)
+    })
+  })
 
-  const checkAuth = () => {
-    const user = auth.currentUser
-
-    if (requiresAuth && !user) {
-      next({ path: '/login' })
-    } else if ((to.path === '/login' || to.path === '/signup') && user) {
-      next({ path: '/dashboard' })
-    } else {
-      next()
-    }
+router.beforeEach(async (to, from, next) => {
+  if (!isAuthResolved) {
+    await getAuthState()
   }
 
-  if (isInitialLoad) {
-    isInitialLoad = false
-    onAuthStateChanged(auth, () => checkAuth())
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+  const user = auth.currentUser
+
+  if (requiresAuth && !user) {
+    next({ path: '/login' })
+  } else if ((to.path === '/login' || to.path === '/signup') && user) {
+    next({ path: '/dashboard' })
   } else {
-    checkAuth()
+    next()
   }
 })
 

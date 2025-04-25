@@ -10,8 +10,6 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "format": "prettier --write src/",
-    "test-api-status": "tsx src/test/test-api.ts",
-    "test": "tsx src/test/test-creation.ts",
     "test-user": "tsx src/test/test-user.ts"
   },
   "dependencies": {

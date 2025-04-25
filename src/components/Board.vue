@@ -12,7 +12,6 @@ import { getColumns } from '@/firebase-api/api'
 import { Board, Column } from '@/firebase-api/api-interfaces'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '@/firebase'
-import router from '@/router'
 
 const props = defineProps<{ board: Board }>()
 const board = ref<Board>(props.board)
@@ -28,7 +27,6 @@ onAuthStateChanged(auth, (user) => {
     }
   } else {
     console.warn('❌ No user logged in. Redirecting...')
-    router.push('/login')
   }
 })
 

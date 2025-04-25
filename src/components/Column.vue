@@ -58,8 +58,8 @@ import Draggable from 'vuedraggable'
 import KanbanCard from '@/components/Card.vue'
 import { Column, Card } from '@/firebase-api/api-interfaces'
 import { getCards, createCard, updateCard } from '@/firebase-api/api'
-import { getAuth, onAuthStateChanged } from 'firebase/auth'
-import router from '@/router'
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth } from '@/firebase'
 
 const props = defineProps<{
   column: Column
@@ -191,21 +191,17 @@ const loadCards = async () => {
 }
 
 // Watch for authentication state
-onMounted(() => {
-  const auth = getAuth()
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      await loadCards()
-      watch(
-        () => props.column.id,
-        async () => {
-          await loadCards()
-        },
-      )
-    } else {
-      console.warn('❌ No user logged in. Redirecting...')
-      router.push('/login')
-    }
-  })
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    await loadCards()
+    watch(
+      () => props.column.id,
+      async () => {
+        await loadCards()
+      },
+    )
+  } else {
+    console.warn('❌ No user logged in. Redirecting...')
+  }
 })
 </script>

@@ -159,31 +159,33 @@ import {
   MenuItems,
 } from '@headlessui/vue'
 import { BellIcon, Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { auth } from '@/firebase'
 
 const userId = ref<string | null>(null)
 let board = ref<Board | null>(null)
 
 onMounted(() => {
   const auth = getAuth()
+  if (auth.currentUser) {
+    userId.value = auth.currentUser.uid
+    console.log('✅ Logged in user ID:', userId.value)
+  } else {
+    console.warn('❌ No user logged in. Redirecting...')
+    router.push('/login')
+  }
+})
 
-  // Async function to load the user board
-  const loadUserBoard = async (userId: string) => {
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    // userId.value = user.uid
+
+    // Call the async function to load the user board
     board.value = await getUserBoard()
     console.log('✅ User Board Retrieved:', board.value)
+  } else {
+    console.warn('❌ No user logged in. Redirecting...')
+    router.push('/login')
   }
-
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      userId.value = user.uid
-      console.log('✅ Logged in user ID:', user.uid)
-
-      // Call the async function to load the user board
-      await loadUserBoard(user.uid)
-    } else {
-      console.warn('❌ No user logged in. Redirecting...')
-      router.push('/login')
-    }
-  })
 })
 
 const handleLogout = async () => {

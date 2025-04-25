@@ -1,5 +1,4 @@
 import { createUser } from '../firebase-api/api'
-import { ref } from 'vue'
 
 // Define the missing function
 async function createTestUserWithBoard() {
