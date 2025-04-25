@@ -85,53 +85,75 @@ const handleCreateCard = async () => {
 }
 
 const onCardUpdate = async (event: any) => {
-  console.log('🧩 onCardUpdate triggered:', event)
-
-  const card = event.item.__draggable_context.element
+  const movedCard = event.item.__draggable_context.element
   const newColumnId = props.column.id
-  const oldColumnId = card.columnId
-  const newIndex = event.newIndex
+  const oldColumnId = movedCard.columnId
+  const newOrder = event.newIndex
+  const oldOrder = movedCard.order
 
-  console.log(`Old Order: ${card.order}, New Order: ${newIndex}`)
+  if (oldColumnId === newColumnId) {
+    // 🔁 Only reordering within the same column
+    if (oldOrder === newOrder) {
+      console.log('🛑 No move needed: same column, same order')
+      return
+    }
 
-  // Normalize all card orders in the column
-  cards.value.forEach((card, index) => {
-    card.order = index
-  })
+    movedCard.order = newOrder
 
-  // If card is already in the correct position, do nothing
-  if (oldColumnId === newColumnId && card.order === newIndex) {
-    console.log('🛑 No move needed: Card is already in the correct position')
-    return
-  }
+    // Recalculate and update all cards in order
+    cards.value.forEach((card, index) => {
+      card.order = index
+    })
 
-  try {
-    // Update Firebase with the new position and column
-    console.log(`Old ColumnId: ${oldColumnId}`)
-    console.log('Updating card...')
     await Promise.all(
-      cards.value.map((card, index) =>
-        updateCard(props.boardId, newColumnId, newColumnId, index, card.id, {
-          order: index,
+      cards.value.map((card) =>
+        updateCard(props.boardId, oldColumnId, oldColumnId, card.order, card.id, {
+          order: card.order,
         }),
       ),
     )
-    console.log('✅ All cards reordered and updated in Firebase')
-    // Update local state if card's column or order has changed
-    card.columnId = newColumnId
-    card.order = newIndex
 
-    console.log(
-      `✅ Updated column ${card.id} to from column ${newColumnId} at position ${newIndex}`,
+    console.log('✅ Same-column reorder complete')
+  } else {
+    // 🔀 Card moved to a different column
+    movedCard.columnId = newColumnId
+    movedCard.order = newOrder
+
+    // Update moved card (with new columnId and order)
+    await updateCard(props.boardId, oldColumnId, newColumnId, newOrder, movedCard.id, {
+      columnId: newColumnId,
+      order: newOrder,
+    })
+
+    // Recalculate order of all cards in new column (cards.value should be new column's cards)
+    cards.value.forEach((card, index) => {
+      card.order = index
+    })
+
+    await Promise.all(
+      cards.value
+        .filter((card) => card.id !== movedCard.id)
+        .map((card) =>
+          updateCard(props.boardId, newColumnId, newColumnId, card.order, card.id, {
+            order: card.order,
+          }),
+        ),
     )
-    console.log(`🧩 Updated order ${card.id} to from order ${card.order} at order ${newIndex}`)
-  } catch (error) {
-    console.error('❌ Error updating card in Firebase:', error)
+
+    console.log('✅ Cross-column move complete')
   }
 
-  // Emit event to parent to update state (reorder or move)
-  emit('card-reordered', { columnId: newColumnId, newIndex, card })
+  // Emit to parent
+  emit('card-reordered', {
+    columnId: newColumnId,
+    newIndex: newOrder,
+    card: movedCard,
+  })
+
+  // Sort locally
+  cards.value.sort((a, b) => a.order - b.order)
 }
+
 // Create A Card
 const createUserCard = async (content: string, columnId: string, boardId?: string) => {
   if (!content.trim()) return

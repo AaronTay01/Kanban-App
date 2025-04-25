@@ -11,6 +11,7 @@ import {
   limit,
   orderBy,
   runTransaction,
+  serverTimestamp,
 } from 'firebase/firestore'
 import {
   createUserWithEmailAndPassword,
@@ -99,7 +100,7 @@ export async function createColumn(title: string, boardId?: string, order?: numb
     order: newOrder,
     boardId: board.id,
     userId: user.uid,
-    createdAt: new Date().toISOString(),
+    createdAt: serverTimestamp(),
   })
 
   console.log(`✅ Column "${title}" created with order ${newOrder}`)
@@ -150,21 +151,12 @@ export async function updateCard(
   cardId: string,
   updatedCardData: Partial<Card> = {},
 ) {
-  if (!boardId || !oldColumnId || !newColumnId || !cardId) {
-    console.error('❌ Missing critical IDs for updateCard:', {
-      boardId,
-      oldColumnId,
-      newColumnId,
-      cardId,
-    })
-    throw new Error('Missing critical IDs for updateCard')
-  }
-
   const oldCardRef = doc(db, 'boards', boardId, 'columns', oldColumnId, 'cards', cardId)
   const newCardRef = doc(db, 'boards', boardId, 'columns', newColumnId, 'cards', cardId)
 
   console.log(
-    `Trying to access card at path: boards/${boardId}/columns/${oldColumnId}/cards/${cardId}`,
+    `Moving card from: boards/${boardId}/columns/${oldColumnId}/cards/${cardId}\n` +
+      `            to: boards/${boardId}/columns/${newColumnId}/cards/${cardId}`,
   )
 
   // Check if the card exists in the old column before updating
@@ -187,7 +179,10 @@ export async function updateCard(
     }
 
     transaction.set(newCardRef, newCardData)
-    transaction.delete(oldCardRef)
+    // Delete old ref when the card is moved to a different column
+    if (oldColumnId !== newColumnId) {
+      transaction.delete(oldCardRef)
+    }
   })
 
   console.log(`✅🔄 Reorder and Moved card "${cardId}" from "${oldColumnId}" to "${newColumnId}"`)
@@ -196,6 +191,15 @@ export async function updateCard(
 // User APIs
 export async function createUser(email: string, password: string): Promise<UserCredential> {
   try {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.(com)$/i
+    if (!emailRegex.test(email)) {
+      throw new Error('Email must be valid and end with .com')
+    }
+
+    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password)) {
+      throw new Error('Password must be at least 8 characters, including letters and numbers')
+    }
+
     const userCredential = await createUserWithEmailAndPassword(auth, email, password)
     const user = userCredential.user
 
@@ -203,13 +207,19 @@ export async function createUser(email: string, password: string): Promise<UserC
     await setDoc(userRef, {
       uid: user.uid,
       email: user.email,
-      createdAt: new Date().toISOString(),
+      createdAt: serverTimestamp(),
     })
 
     return userCredential
   } catch (err: any) {
     if (err.code === 'auth/email-already-in-use') {
       console.log('❌ Email already in use')
+    } else if (err.code === 'auth/invalid-email') {
+      console.log('❌ Invalid email format')
+    } else if (err.code === 'auth/weak-password') {
+      console.log('❌ Weak password')
+    } else {
+      console.log('❌ Unknown error:', err.message || err)
     }
     throw err
   }
